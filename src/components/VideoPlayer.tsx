@@ -84,7 +84,7 @@ function parseEmbed(url: string): ParsedVideo {
   if (yt) {
     return {
       type: "youtube",
-      embedUrl: `https://www.youtube.com/embed/${yt[1]}?rel=0&modestbranding=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&playsinline=1&enablejsapi=1`,
+      embedUrl: `https://www.youtube.com/embed/${yt[1]}?rel=0&modestbranding=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&playsinline=1&enablejsapi=1&cc_load_policy=0`,
       youtubeId: yt[1],
     };
   }
@@ -144,6 +144,7 @@ export function VideoPlayer({ src, poster, title }: Props) {
         videoId: youtubeId,
         playerVars: {
           autoplay: 0,
+          cc_load_policy: 0,
           controls: 0,
           disablekb: 1,
           fs: 0,
@@ -238,12 +239,14 @@ export function VideoPlayer({ src, poster, title }: Props) {
 
   if (type === "youtube") {
     return (
-      <div className="relative w-full h-full bg-black">
+      <div className="relative w-full h-full overflow-hidden bg-black">
         <div
           ref={youtubeContainerRef}
-          className="w-full h-full [&_iframe]:h-full [&_iframe]:w-full [&_iframe]:pointer-events-none"
+          className="absolute -inset-y-16 left-0 right-0 [&_iframe]:h-[calc(100%+8rem)] [&_iframe]:w-full [&_iframe]:pointer-events-none"
           title={title || "Aula"}
         />
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-20 bg-gradient-to-b from-black via-black/80 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-24 bg-gradient-to-t from-black via-black/85 to-transparent" />
         {!started && (
           <button
             type="button"
@@ -256,7 +259,21 @@ export function VideoPlayer({ src, poster, title }: Props) {
             </span>
           </button>
         )}
-        {started && (
+        {started && !isPlaying && (
+          <button
+            type="button"
+            onClick={toggleYouTubePlayback}
+            className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-black/65 text-white backdrop-blur-sm"
+          >
+            <span className="text-xs font-bold uppercase tracking-[0.3em] text-white/70">
+              Aula pausada
+            </span>
+            <span className="rounded-full bg-red-600 px-8 py-4 text-sm font-bold uppercase tracking-[0.2em] shadow-2xl transition hover:scale-105 hover:bg-red-500">
+              Continuar aula
+            </span>
+          </button>
+        )}
+        {started && isPlaying && (
           <button
             type="button"
             onClick={toggleYouTubePlayback}
