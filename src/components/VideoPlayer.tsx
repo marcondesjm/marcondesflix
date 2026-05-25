@@ -248,7 +248,7 @@ export function VideoPlayer({ src, poster, title }: Props) {
           <button
             type="button"
             onClick={toggleYouTubePlayback}
-            className="absolute inset-0 flex items-center justify-center bg-black/70 text-white"
+            className="absolute inset-0 z-30 flex items-center justify-center bg-black/70 text-white"
             aria-label={`Assistir ${title || "aula"}`}
           >
             <span className="rounded-full bg-red-600 px-8 py-4 text-sm font-bold uppercase tracking-[0.2em] shadow-2xl transition hover:scale-105 hover:bg-red-500">
@@ -260,7 +260,7 @@ export function VideoPlayer({ src, poster, title }: Props) {
           <button
             type="button"
             onClick={toggleYouTubePlayback}
-            className="absolute bottom-4 left-4 rounded-full bg-black/75 px-5 py-3 text-xs font-bold uppercase tracking-[0.18em] text-white shadow-xl backdrop-blur transition hover:bg-red-600"
+            className="absolute right-4 top-4 z-30 rounded-full border border-white/20 bg-red-600 px-6 py-3 text-xs font-bold uppercase tracking-[0.18em] text-white shadow-2xl backdrop-blur transition hover:scale-105 hover:bg-red-500"
           >
             {isPlaying ? "Pausar aula" : "Continuar aula"}
           </button>
