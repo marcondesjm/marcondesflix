@@ -277,7 +277,7 @@ export function VideoPlayer({ src, poster, title }: Props) {
           <button
             type="button"
             onClick={toggleYouTubePlayback}
-            className="absolute right-4 top-4 z-30 rounded-full border border-white/20 bg-red-600 px-6 py-3 text-xs font-bold uppercase tracking-[0.18em] text-white shadow-2xl backdrop-blur transition hover:scale-105 hover:bg-red-500"
+            className="absolute bottom-5 left-1/2 z-30 -translate-x-1/2 rounded-full border border-white/25 bg-red-600/70 px-6 py-3 text-xs font-bold uppercase tracking-[0.18em] text-white shadow-2xl backdrop-blur-md transition hover:scale-105 hover:bg-red-600"
           >
             {isPlaying ? "Pausar aula" : "Continuar aula"}
           </button>
