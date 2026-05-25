@@ -20,8 +20,10 @@ type YouTubePlayer = {
   destroy: () => void;
   getCurrentTime: () => number;
   getDuration: () => number;
+  getPlaybackRate: () => number;
   pauseVideo: () => void;
   playVideo: () => void;
+  setPlaybackRate: (rate: number) => void;
   seekTo: (seconds: number, allowSeekAhead: boolean) => void;
 };
 
@@ -104,6 +106,7 @@ export function VideoPlayer({ src, onProgress, poster, title }: Props) {
   const [currentSrc, setCurrentSrc] = useState(src);
   const [started, setStarted] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [playbackRate, setPlaybackRate] = useState(1);
   const { type, embedUrl, youtubeId } = parseEmbed(currentSrc);
   const progressKey = useMemo(
     () => `marcondesflix:video-progress:${currentSrc}`,
@@ -131,6 +134,7 @@ export function VideoPlayer({ src, onProgress, poster, title }: Props) {
     setCurrentSrc(src);
     setStarted(false);
     setIsPlaying(false);
+    setPlaybackRate(1);
   }, [src]);
 
   useEffect(() => {
@@ -214,6 +218,21 @@ export function VideoPlayer({ src, onProgress, poster, title }: Props) {
     setIsPlaying(true);
   };
 
+  const seekYouTubeBy = (deltaSeconds: number) => {
+    const player = youtubePlayerRef.current;
+    if (!player) return;
+    const duration = player.getDuration() || 0;
+    const nextTime = Math.max(0, Math.min(duration || Infinity, player.getCurrentTime() + deltaSeconds));
+    player.seekTo(nextTime, true);
+    saveTime(nextTime, duration);
+  };
+
+  const changeYouTubeRate = (rate: number) => {
+    const player = youtubePlayerRef.current;
+    setPlaybackRate(rate);
+    player?.setPlaybackRate(rate);
+  };
+
   if (type === "file") {
     return (
       <video
@@ -280,6 +299,36 @@ export function VideoPlayer({ src, onProgress, poster, title }: Props) {
           >
             {isPlaying ? "Pausar aula" : "Continuar aula"}
           </button>
+        )}
+        {started && (
+          <div className="absolute bottom-5 left-5 z-30 flex flex-wrap items-center gap-2 rounded-full border border-white/15 bg-black/35 px-3 py-2 text-white shadow-2xl backdrop-blur-md">
+            <button
+              type="button"
+              onClick={() => seekYouTubeBy(-10)}
+              className="rounded-full bg-white/10 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.14em] transition hover:bg-white/20"
+            >
+              -10s
+            </button>
+            <button
+              type="button"
+              onClick={() => seekYouTubeBy(10)}
+              className="rounded-full bg-white/10 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.14em] transition hover:bg-white/20"
+            >
+              +10s
+            </button>
+            {[1, 1.3, 1.5].map((rate) => (
+              <button
+                key={rate}
+                type="button"
+                onClick={() => changeYouTubeRate(rate)}
+                className={`rounded-full px-3 py-2 text-[11px] font-bold transition ${
+                  playbackRate === rate ? "bg-red-600 text-white" : "bg-white/10 text-white hover:bg-white/20"
+                }`}
+              >
+                {rate}x
+              </button>
+            ))}
+          </div>
         )}
       </div>
     );
