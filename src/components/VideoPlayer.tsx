@@ -243,16 +243,14 @@ export function VideoPlayer({ src, onProgress, poster, title }: Props) {
   if (type === "youtube") {
     return (
       <div className="relative w-full h-full overflow-hidden bg-black">
-        <div className="absolute -left-12 -right-12 -top-12 -bottom-28 [&_iframe]:h-full [&_iframe]:w-full [&_iframe]:pointer-events-none">
+        <div className="absolute -left-12 -right-12 -top-12 -bottom-36 [&_iframe]:h-full [&_iframe]:w-full [&_iframe]:pointer-events-none">
           <div ref={youtubeContainerRef} className="h-full w-full" title={title || "Aula"} />
         </div>
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-24 bg-gradient-to-b from-black via-black/85 to-transparent" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-36 bg-gradient-to-t from-black via-black/90 to-transparent" />
         {!started && (
           <button
             type="button"
             onClick={toggleYouTubePlayback}
-            className="absolute inset-0 z-30 flex items-center justify-center bg-black/70 text-white"
+            className="absolute inset-0 z-30 flex items-center justify-center bg-black/15 text-white"
             aria-label={`Assistir ${title || "aula"}`}
           >
             <span className="rounded-full bg-red-600 px-8 py-4 text-sm font-bold uppercase tracking-[0.2em] shadow-2xl transition hover:scale-105 hover:bg-red-500">
@@ -264,7 +262,7 @@ export function VideoPlayer({ src, onProgress, poster, title }: Props) {
           <button
             type="button"
             onClick={toggleYouTubePlayback}
-            className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-black/65 text-white backdrop-blur-sm"
+            className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 text-white"
           >
             <span className="text-xs font-bold uppercase tracking-[0.3em] text-white/70">
               Aula pausada
