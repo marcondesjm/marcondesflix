@@ -17,7 +17,7 @@ function parseEmbed(url: string): { type: "youtube" | "vimeo" | "file"; embedUrl
   if (yt) {
     return {
       type: "youtube",
-      embedUrl: `https://www.youtube.com/embed/${yt[1]}?rel=0&modestbranding=1`,
+      embedUrl: `https://www.youtube.com/embed/${yt[1]}?rel=0&modestbranding=1&controls=0&disablekb=1&fs=0&iv_load_policy=3&playsinline=1`,
     };
   }
   // Vimeo: vimeo.com/123 or player.vimeo.com/video/123
@@ -30,10 +30,12 @@ function parseEmbed(url: string): { type: "youtube" | "vimeo" | "file"; embedUrl
 
 export function VideoPlayer({ src, poster, title }: Props) {
   const [currentSrc, setCurrentSrc] = useState(src);
+  const [started, setStarted] = useState(false);
   const { type, embedUrl } = parseEmbed(currentSrc);
 
   useEffect(() => {
     setCurrentSrc(src);
+    setStarted(false);
   }, [src]);
 
   if (type === "file") {
@@ -50,6 +52,34 @@ export function VideoPlayer({ src, poster, title }: Props) {
           }
         }}
       />
+    );
+  }
+
+  if (type === "youtube") {
+    const srcWithPlayback = `${embedUrl}&autoplay=${started ? "1" : "0"}`;
+
+    return (
+      <div className="relative w-full h-full bg-black">
+        <iframe
+          key={srcWithPlayback}
+          src={srcWithPlayback}
+          title={title || "Aula"}
+          className="w-full h-full pointer-events-none"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        />
+        {!started && (
+          <button
+            type="button"
+            onClick={() => setStarted(true)}
+            className="absolute inset-0 flex items-center justify-center bg-black/70 text-white"
+            aria-label={`Assistir ${title || "aula"}`}
+          >
+            <span className="rounded-full bg-red-600 px-8 py-4 text-sm font-bold uppercase tracking-[0.2em] shadow-2xl transition hover:scale-105 hover:bg-red-500">
+              Assistir aula
+            </span>
+          </button>
+        )}
+      </div>
     );
   }
 
