@@ -261,7 +261,7 @@ export function VideoPlayer({ src, onProgress, poster, title }: Props) {
 
   if (type === "youtube") {
     return (
-      <div className="relative w-full h-full overflow-hidden bg-black">
+      <div className="group relative w-full h-full overflow-hidden bg-black">
         <div className="absolute -left-12 -right-12 -top-12 -bottom-36 [&_iframe]:h-full [&_iframe]:w-full [&_iframe]:pointer-events-none">
           <div ref={youtubeContainerRef} className="h-full w-full" title={title || "Aula"} />
         </div>
@@ -295,13 +295,13 @@ export function VideoPlayer({ src, onProgress, poster, title }: Props) {
           <button
             type="button"
             onClick={toggleYouTubePlayback}
-            className="absolute bottom-5 left-1/2 z-30 -translate-x-1/2 rounded-full border border-white/25 bg-red-600/70 px-6 py-3 text-xs font-bold uppercase tracking-[0.18em] text-white shadow-2xl backdrop-blur-md transition hover:scale-105 hover:bg-red-600"
+            className="absolute bottom-5 left-1/2 z-30 -translate-x-1/2 rounded-full border border-white/25 bg-red-600/70 px-6 py-3 text-xs font-bold uppercase tracking-[0.18em] text-white opacity-0 shadow-2xl backdrop-blur-md transition duration-200 hover:scale-105 hover:bg-red-600 group-hover:opacity-100 focus:opacity-100"
           >
             {isPlaying ? "Pausar aula" : "Continuar aula"}
           </button>
         )}
         {started && (
-          <div className="absolute bottom-5 left-5 z-30 flex flex-wrap items-center gap-2 rounded-full border border-white/15 bg-black/35 px-3 py-2 text-white shadow-2xl backdrop-blur-md">
+          <div className="absolute bottom-5 left-5 z-30 flex flex-wrap items-center gap-2 rounded-full border border-white/15 bg-black/35 px-3 py-2 text-white opacity-0 shadow-2xl backdrop-blur-md transition duration-200 group-hover:opacity-100 focus-within:opacity-100">
             <button
               type="button"
               onClick={() => seekYouTubeBy(-10)}
