@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 type Props = {
   src: string;
+  onProgress?: (seconds: number) => void;
   poster?: string;
   title?: string;
 };
@@ -96,7 +97,7 @@ function parseEmbed(url: string): ParsedVideo {
   return { type: "file", embedUrl: url };
 }
 
-export function VideoPlayer({ src, poster, title }: Props) {
+export function VideoPlayer({ src, onProgress, poster, title }: Props) {
   const fileVideoRef = useRef<HTMLVideoElement | null>(null);
   const youtubeContainerRef = useRef<HTMLDivElement | null>(null);
   const youtubePlayerRef = useRef<YouTubePlayer | null>(null);
@@ -119,9 +120,11 @@ export function VideoPlayer({ src, poster, title }: Props) {
     if (typeof window === "undefined" || !Number.isFinite(seconds)) return;
     if (duration && seconds >= duration - 5) {
       window.localStorage.removeItem(progressKey);
+      onProgress?.(duration);
       return;
     }
     window.localStorage.setItem(progressKey, String(Math.floor(seconds)));
+    onProgress?.(seconds);
   };
 
   useEffect(() => {

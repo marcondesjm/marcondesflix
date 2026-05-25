@@ -104,11 +104,13 @@ function Sidebar({ tab }: { tab: Tab }) {
 
 type Product = {
   id: string;
+  course_id?: string;
   title: string;
   cover_url: string | null;
   commission_pct: number;
   price: number;
   product_type: string;
+  requestable: boolean;
 };
 
 function ProdutosTab({ userId }: { userId: string }) {
@@ -123,7 +125,33 @@ function ProdutosTab({ userId }: { userId: string }) {
         supabase.from("affiliate_products").select("*").eq("is_active", true),
         supabase.from("affiliations").select("product_id").eq("user_id", userId),
       ]);
-      setProducts((ps as Product[]) || []);
+      const affiliateProducts = ((ps as any[]) || []).map((p) => ({
+        ...p,
+        requestable: true,
+      }));
+
+      if (affiliateProducts.length > 0) {
+        setProducts(affiliateProducts);
+      } else {
+        const { data: courses } = await supabase
+          .from("courses")
+          .select("id,title,cover_url")
+          .eq("is_published", true)
+          .order("created_at", { ascending: false });
+
+        setProducts(
+          ((courses as any[]) || []).map((course) => ({
+            id: `course:${course.id}`,
+            course_id: course.id,
+            title: course.title,
+            cover_url: course.cover_url,
+            commission_pct: 50,
+            price: 0,
+            product_type: "Curso",
+            requestable: false,
+          }))
+        );
+      }
       setMine(new Set((af || []).map((a: any) => a.product_id)));
       setLoading(false);
     })();
@@ -196,10 +224,16 @@ function ProductCard({ product, requested, onRequest }: { product: Product; requ
         </span>
         <button
           disabled={requested}
-          onClick={onRequest}
+          onClick={() => {
+            if (!product.requestable) {
+              toast.info("Curso publicado listado. Para receber solicitacoes, habilite este curso como produto de afiliacao no painel admin.");
+              return;
+            }
+            onRequest();
+          }}
           className="mt-auto w-full bg-gradient-red text-primary-foreground font-bold py-3 rounded-md flex items-center justify-center gap-2 shadow-glow disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          <Star className="w-4 h-4" /> {requested ? "Solicitada" : "Solicitar Afiliação"}
+          <Star className="w-4 h-4" /> {requested ? "Solicitada" : product.requestable ? "Solicitar Afiliação" : "Produto do Curso"}
         </button>
       </div>
     </article>

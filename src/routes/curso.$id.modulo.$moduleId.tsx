@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,10 +26,12 @@ function ModuloPage() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [progress, setProgress] = useState<Record<string, boolean>>({});
+  const [watchedSeconds, setWatchedSeconds] = useState<Record<string, number>>({});
   const [rating, setRating] = useState(0);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(true);
+  const lastProgressSync = useRef<Record<string, number>>({});
 
   useEffect(() => {
     if (authLoading) return;
@@ -46,12 +48,17 @@ function ModuloPage() {
       setActiveId(ls?.[0]?.id ?? null);
       if (ls?.length) {
         const { data: pg } = await supabase
-          .from("lesson_progress").select("lesson_id,completed")
+          .from("lesson_progress").select("lesson_id,completed,watched_seconds")
           .eq("user_id", session.user.id)
           .in("lesson_id", ls.map((l: any) => l.id));
         const map: Record<string, boolean> = {};
-        pg?.forEach((p: any) => { map[p.lesson_id] = p.completed; });
+        const watchedMap: Record<string, number> = {};
+        pg?.forEach((p: any) => {
+          map[p.lesson_id] = p.completed;
+          watchedMap[p.lesson_id] = p.watched_seconds || 0;
+        });
         setProgress(map);
+        setWatchedSeconds(watchedMap);
       }
       setLoading(false);
     })();
@@ -86,7 +93,28 @@ function ModuloPage() {
     );
     if (error) return toast.error(error.message);
     setProgress((p) => ({ ...p, [active.id]: true }));
+    setWatchedSeconds((p) => ({ ...p, [active.id]: active.duration_seconds || p[active.id] || 0 }));
     toast.success("Aula concluída!");
+  };
+
+  const syncVideoProgress = async (lesson: Lesson, seconds: number) => {
+    if (!session) return;
+    const watched = Math.max(0, Math.floor(seconds));
+    setWatchedSeconds((p) => ({ ...p, [lesson.id]: Math.max(p[lesson.id] || 0, watched) }));
+
+    const now = Date.now();
+    if (now - (lastProgressSync.current[lesson.id] || 0) < 10000) return;
+    lastProgressSync.current[lesson.id] = now;
+
+    const duration = lesson.duration_seconds || 0;
+    const completed = progress[lesson.id] || (duration > 0 && watched >= duration - 5);
+    const { error } = await supabase.from("lesson_progress").upsert(
+      { user_id: session.user.id, lesson_id: lesson.id, completed, watched_seconds: watched },
+      { onConflict: "user_id,lesson_id" }
+    );
+    if (!error && completed) {
+      setProgress((p) => ({ ...p, [lesson.id]: true }));
+    }
   };
 
   const goPrev = () => {
@@ -115,6 +143,13 @@ function ModuloPage() {
     const mm = Math.floor(sec / 60);
     const ss = sec % 60;
     return `${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
+  };
+
+  const watchPercent = (lesson: Lesson) => {
+    if (progress[lesson.id]) return 100;
+    const duration = lesson.duration_seconds || 0;
+    if (!duration) return watchedSeconds[lesson.id] ? 1 : 0;
+    return Math.min(99, Math.max(0, Math.round(((watchedSeconds[lesson.id] || 0) / duration) * 100)));
   };
 
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Carregando...</div>;
@@ -169,7 +204,11 @@ function ModuloPage() {
           <div>
             <div className="aspect-video rounded-xl overflow-hidden bg-black border border-border">
               {active?.video_url ? (
-                <VideoPlayer src={active.video_url} title={active.title} />
+                <VideoPlayer
+                  src={active.video_url}
+                  title={active.title}
+                  onProgress={(seconds) => syncVideoProgress(active, seconds)}
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-muted-foreground">Selecione uma aula</div>
               )}
@@ -247,6 +286,7 @@ function ModuloPage() {
               {lessons.map((l, idx) => {
                 const isActive = l.id === activeId;
                 const isDone = progress[l.id];
+                const percent = watchPercent(l);
                 return (
                   <li key={l.id}>
                     <button
@@ -270,7 +310,18 @@ function ModuloPage() {
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-semibold truncate">{l.title}</div>
-                        <div className="text-xs text-muted-foreground">{fmtTime(l.duration_seconds)}</div>
+                        <div className="mt-1 flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">{fmtTime(l.duration_seconds)}</span>
+                          <span className={`text-[10px] font-bold ${percent > 0 ? "text-emerald-300" : "text-muted-foreground"}`}>
+                            {percent}% visto
+                          </span>
+                        </div>
+                        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+                          <div
+                            className={`h-full rounded-full ${isDone ? "bg-emerald-400" : "bg-primary"}`}
+                            style={{ width: `${percent}%` }}
+                          />
+                        </div>
                       </div>
                       {isDone ? (
                         <div className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-300 shrink-0">
