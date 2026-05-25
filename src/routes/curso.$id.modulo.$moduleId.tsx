@@ -252,12 +252,16 @@ function ModuloPage() {
                     <button
                       onClick={() => setActiveId(l.id)}
                       className={`w-full flex items-center gap-3 p-3 rounded-md transition-colors text-left ${
-                        isActive ? "bg-primary/10 border border-primary/40" : "hover:bg-surface-elevated border border-transparent"
+                        isDone
+                          ? "bg-emerald-500/10 border border-emerald-500/45"
+                          : isActive
+                            ? "bg-primary/10 border border-primary/40"
+                            : "hover:bg-surface-elevated border border-transparent"
                       }`}
                     >
                       {isDone ? (
-                        <div className="w-7 h-7 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
-                          <Check className="w-4 h-4 text-emerald-400" />
+                        <div className="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
+                          <Check className="w-4 h-4 text-white" />
                         </div>
                       ) : (
                         <div className="w-7 h-7 rounded-full bg-surface-elevated border border-border flex items-center justify-center text-xs font-bold text-muted-foreground shrink-0">
@@ -268,7 +272,14 @@ function ModuloPage() {
                         <div className="text-sm font-semibold truncate">{l.title}</div>
                         <div className="text-xs text-muted-foreground">{fmtTime(l.duration_seconds)}</div>
                       </div>
-                      {isActive && <div className="w-2 h-2 rounded-full bg-primary shrink-0" />}
+                      {isDone ? (
+                        <div className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-300 shrink-0">
+                          <Check className="w-3 h-3" />
+                          Concluida
+                        </div>
+                      ) : (
+                        isActive && <div className="w-2 h-2 rounded-full bg-primary shrink-0" />
+                      )}
                     </button>
                   </li>
                 );
