@@ -240,13 +240,11 @@ export function VideoPlayer({ src, poster, title }: Props) {
   if (type === "youtube") {
     return (
       <div className="relative w-full h-full overflow-hidden bg-black">
-        <div
-          ref={youtubeContainerRef}
-          className="absolute -inset-y-16 left-0 right-0 [&_iframe]:h-[calc(100%+8rem)] [&_iframe]:w-full [&_iframe]:pointer-events-none"
-          title={title || "Aula"}
-        />
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-20 bg-gradient-to-b from-black via-black/80 to-transparent" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-24 bg-gradient-to-t from-black via-black/85 to-transparent" />
+        <div className="absolute -left-12 -right-12 -top-12 -bottom-28 [&_iframe]:h-full [&_iframe]:w-full [&_iframe]:pointer-events-none">
+          <div ref={youtubeContainerRef} className="h-full w-full" title={title || "Aula"} />
+        </div>
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-24 bg-gradient-to-b from-black via-black/85 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-36 bg-gradient-to-t from-black via-black/90 to-transparent" />
         {!started && (
           <button
             type="button"
