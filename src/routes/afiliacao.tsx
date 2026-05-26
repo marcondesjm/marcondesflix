@@ -204,9 +204,7 @@ function ProdutosTab({ userId }: { userId: string }) {
 function ProductCard({ product, requested, onRequest }: { product: Product; requested: boolean; onRequest: () => void }) {
   return (
     <article className="bg-surface/60 rounded-xl overflow-hidden border border-border/50 flex flex-col">
-      <div className="aspect-video bg-surface overflow-hidden">
-        {product.cover_url && <img src={product.cover_url} alt={product.title} className="w-full h-full object-cover" />}
-      </div>
+      <ProductCover title={product.title} coverUrl={product.cover_url} />
       <div className="p-5 flex-1 flex flex-col gap-4">
         <h3 className="font-bold text-lg">{product.title}</h3>
         <div className="flex items-center justify-between text-xs">
@@ -237,6 +235,31 @@ function ProductCard({ product, requested, onRequest }: { product: Product; requ
         </button>
       </div>
     </article>
+  );
+}
+
+function ProductCover({ title, coverUrl }: { title: string; coverUrl: string | null }) {
+  return (
+    <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-primary/30 via-red-950/60 to-black">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(255,255,255,0.18),transparent_28%),radial-gradient(circle_at_80%_80%,rgba(255,0,55,0.26),transparent_32%)]" />
+      <div className="absolute inset-0 flex items-end p-4">
+        <div>
+          <div className="mb-2 h-1 w-12 rounded-full bg-primary" />
+          <div className="text-lg font-black leading-tight text-white line-clamp-2">{title}</div>
+          <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.24em] text-white/55">MarcondesFlix</div>
+        </div>
+      </div>
+      {coverUrl && (
+        <img
+          src={coverUrl}
+          alt={title}
+          className="absolute inset-0 h-full w-full object-cover"
+          onError={(event) => {
+            event.currentTarget.style.display = "none";
+          }}
+        />
+      )}
+    </div>
   );
 }
 

@@ -130,11 +130,7 @@ function CategorySection({
               params={{ id: c.id }}
               className="block relative aspect-square rounded-xl overflow-hidden border border-border bg-surface group-hover:border-primary group-hover:shadow-glow transition-all"
             >
-              {c.cover_url ? (
-                <img src={c.cover_url} alt={c.title} loading="lazy" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-indigo-500/40 to-violet-700/60" />
-              )}
+              <CourseCover title={c.title} coverUrl={c.cover_url} />
             </Link>
             {!enrolled && onEnroll && (
               <button
@@ -162,5 +158,31 @@ function CategorySection({
         ))}
       </div>
     </section>
+  );
+}
+
+function CourseCover({ title, coverUrl }: { title: string; coverUrl: string | null }) {
+  return (
+    <div className="relative h-full w-full overflow-hidden bg-gradient-to-br from-primary/30 via-red-950/60 to-black">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.18),transparent_28%),radial-gradient(circle_at_78%_78%,rgba(255,0,55,0.28),transparent_32%)]" />
+      <div className="absolute inset-0 flex items-end p-4">
+        <div>
+          <div className="mb-2 h-1 w-10 rounded-full bg-primary" />
+          <div className="text-sm font-black leading-tight text-white line-clamp-3">{title}</div>
+          <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.2em] text-white/50">MarcondesFlix</div>
+        </div>
+      </div>
+      {coverUrl && (
+        <img
+          src={coverUrl}
+          alt={title}
+          loading="lazy"
+          className="absolute inset-0 h-full w-full object-cover"
+          onError={(event) => {
+            event.currentTarget.style.display = "none";
+          }}
+        />
+      )}
+    </div>
   );
 }
