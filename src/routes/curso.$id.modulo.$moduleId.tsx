@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { ArrowLeft, Check, Star, ThumbsUp, ThumbsDown, MessageCircle, Send, User as UserIcon } from "lucide-react";
+import { ArrowLeft, Check, Lock, Star, ThumbsUp, ThumbsDown, MessageCircle, Send, User as UserIcon } from "lucide-react";
 import { VideoPlayer } from "@/components/VideoPlayer";
 
 export const Route = createFileRoute("/curso/$id/modulo/$moduleId")({
@@ -84,9 +84,28 @@ function ModuloPage() {
 
   const active = lessons.find((l) => l.id === activeId);
   const completedCount = lessons.filter((l) => progress[l.id]).length;
+  const activeIndex = lessons.findIndex((l) => l.id === activeId);
+
+  const isLessonUnlocked = (index: number) => (
+    index === 0 || lessons.slice(0, index).every((lesson) => progress[lesson.id])
+  );
+
+  const selectLesson = (lesson: Lesson, index: number) => {
+    if (!isLessonUnlocked(index)) {
+      toast.error("Conclua a aula anterior para liberar esta aula.");
+      return;
+    }
+    setActiveId(lesson.id);
+  };
 
   const markComplete = async () => {
     if (!session || !active) return;
+    const duration = active.duration_seconds || 0;
+    const watched = watchedSeconds[active.id] || 0;
+    if (duration > 0 && watched < duration - 5) {
+      toast.error("Assista a aula ate o final para concluir.");
+      return;
+    }
     const { error } = await supabase.from("lesson_progress").upsert(
       { user_id: session.user.id, lesson_id: active.id, completed: true, watched_seconds: active.duration_seconds || 0 },
       { onConflict: "user_id,lesson_id" }
@@ -123,7 +142,12 @@ function ModuloPage() {
   };
   const goNext = () => {
     const idx = lessons.findIndex((l) => l.id === activeId);
-    if (idx < lessons.length - 1) setActiveId(lessons[idx + 1].id);
+    if (idx < 0 || idx >= lessons.length - 1) return;
+    if (!progress[lessons[idx].id]) {
+      toast.error("Conclua esta aula antes de ir para a proxima.");
+      return;
+    }
+    setActiveId(lessons[idx + 1].id);
   };
 
   const submitComment = async () => {
@@ -194,7 +218,11 @@ function ModuloPage() {
           <button onClick={goPrev} className="text-sm font-semibold px-4 py-2 rounded-md bg-surface border border-border hover:border-primary/40 transition-colors">
             Aula Anterior
           </button>
-          <button onClick={goNext} className="text-sm font-bold px-4 py-2 rounded-md bg-gradient-red text-primary-foreground shadow-glow hover:scale-[1.02] transition-transform">
+          <button
+            onClick={goNext}
+            disabled={activeIndex >= lessons.length - 1 || (active ? !progress[active.id] : false)}
+            className="text-sm font-bold px-4 py-2 rounded-md bg-gradient-red text-primary-foreground shadow-glow hover:scale-[1.02] transition-transform disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:scale-100"
+          >
             Próxima Aula
           </button>
         </div>
@@ -287,19 +315,27 @@ function ModuloPage() {
                 const isActive = l.id === activeId;
                 const isDone = progress[l.id];
                 const percent = watchPercent(l);
+                const unlocked = isLessonUnlocked(idx);
                 return (
                   <li key={l.id}>
                     <button
-                      onClick={() => setActiveId(l.id)}
+                      onClick={() => selectLesson(l, idx)}
+                      disabled={!unlocked}
                       className={`w-full flex items-center gap-3 p-3 rounded-md transition-colors text-left ${
-                        isDone
+                        !unlocked
+                          ? "cursor-not-allowed opacity-45 border border-transparent"
+                          : isDone
                           ? "bg-emerald-500/10 border border-emerald-500/45"
                           : isActive
                             ? "bg-primary/10 border border-primary/40"
                             : "hover:bg-surface-elevated border border-transparent"
                       }`}
                     >
-                      {isDone ? (
+                      {!unlocked ? (
+                        <div className="w-7 h-7 rounded-full bg-surface-elevated border border-border flex items-center justify-center shrink-0">
+                          <Lock className="w-3.5 h-3.5 text-muted-foreground" />
+                        </div>
+                      ) : isDone ? (
                         <div className="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
                           <Check className="w-4 h-4 text-white" />
                         </div>
@@ -343,3 +379,4 @@ function ModuloPage() {
     </div>
   );
 }
+
