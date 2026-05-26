@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as ProdutorRouteImport } from './routes/produtor'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as MeusCursosRouteImport } from './routes/meus-cursos'
 import { Route as LoginRouteImport } from './routes/login'
@@ -17,8 +18,10 @@ import { Route as AssinaturasRouteImport } from './routes/assinaturas'
 import { Route as AfiliacaoRouteImport } from './routes/afiliacao'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as OfertaSlugRouteImport } from './routes/oferta.$slug'
 import { Route as CursoIdRouteImport } from './routes/curso.$id'
 import { Route as CheckoutIdRouteImport } from './routes/checkout.$id'
+import { Route as CheckoutProdutoIdRouteImport } from './routes/checkout-produto.$id'
 import { Route as CursoIdIndexRouteImport } from './routes/curso.$id.index'
 import { Route as AdminCursoIdRouteImport } from './routes/admin.curso.$id'
 import { Route as CursoIdModuloModuleIdRouteImport } from './routes/curso.$id.modulo.$moduleId'
@@ -26,6 +29,11 @@ import { Route as CursoIdModuloModuleIdRouteImport } from './routes/curso.$id.mo
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProdutorRoute = ProdutorRouteImport.update({
+  id: '/produtor',
+  path: '/produtor',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PerfilRoute = PerfilRouteImport.update({
@@ -63,6 +71,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OfertaSlugRoute = OfertaSlugRouteImport.update({
+  id: '/oferta/$slug',
+  path: '/oferta/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CursoIdRoute = CursoIdRouteImport.update({
   id: '/curso/$id',
   path: '/curso/$id',
@@ -71,6 +84,11 @@ const CursoIdRoute = CursoIdRouteImport.update({
 const CheckoutIdRoute = CheckoutIdRouteImport.update({
   id: '/checkout/$id',
   path: '/checkout/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutProdutoIdRoute = CheckoutProdutoIdRouteImport.update({
+  id: '/checkout-produto/$id',
+  path: '/checkout-produto/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CursoIdIndexRoute = CursoIdIndexRouteImport.update({
@@ -97,9 +115,12 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/meus-cursos': typeof MeusCursosRoute
   '/perfil': typeof PerfilRoute
+  '/produtor': typeof ProdutorRoute
   '/signup': typeof SignupRoute
+  '/checkout-produto/$id': typeof CheckoutProdutoIdRoute
   '/checkout/$id': typeof CheckoutIdRoute
   '/curso/$id': typeof CursoIdRouteWithChildren
+  '/oferta/$slug': typeof OfertaSlugRoute
   '/admin/curso/$id': typeof AdminCursoIdRoute
   '/curso/$id/': typeof CursoIdIndexRoute
   '/curso/$id/modulo/$moduleId': typeof CursoIdModuloModuleIdRoute
@@ -112,8 +133,11 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/meus-cursos': typeof MeusCursosRoute
   '/perfil': typeof PerfilRoute
+  '/produtor': typeof ProdutorRoute
   '/signup': typeof SignupRoute
+  '/checkout-produto/$id': typeof CheckoutProdutoIdRoute
   '/checkout/$id': typeof CheckoutIdRoute
+  '/oferta/$slug': typeof OfertaSlugRoute
   '/admin/curso/$id': typeof AdminCursoIdRoute
   '/curso/$id': typeof CursoIdIndexRoute
   '/curso/$id/modulo/$moduleId': typeof CursoIdModuloModuleIdRoute
@@ -127,9 +151,12 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/meus-cursos': typeof MeusCursosRoute
   '/perfil': typeof PerfilRoute
+  '/produtor': typeof ProdutorRoute
   '/signup': typeof SignupRoute
+  '/checkout-produto/$id': typeof CheckoutProdutoIdRoute
   '/checkout/$id': typeof CheckoutIdRoute
   '/curso/$id': typeof CursoIdRouteWithChildren
+  '/oferta/$slug': typeof OfertaSlugRoute
   '/admin/curso/$id': typeof AdminCursoIdRoute
   '/curso/$id/': typeof CursoIdIndexRoute
   '/curso/$id/modulo/$moduleId': typeof CursoIdModuloModuleIdRoute
@@ -144,9 +171,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/meus-cursos'
     | '/perfil'
+    | '/produtor'
     | '/signup'
+    | '/checkout-produto/$id'
     | '/checkout/$id'
     | '/curso/$id'
+    | '/oferta/$slug'
     | '/admin/curso/$id'
     | '/curso/$id/'
     | '/curso/$id/modulo/$moduleId'
@@ -159,8 +189,11 @@ export interface FileRouteTypes {
     | '/login'
     | '/meus-cursos'
     | '/perfil'
+    | '/produtor'
     | '/signup'
+    | '/checkout-produto/$id'
     | '/checkout/$id'
+    | '/oferta/$slug'
     | '/admin/curso/$id'
     | '/curso/$id'
     | '/curso/$id/modulo/$moduleId'
@@ -173,9 +206,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/meus-cursos'
     | '/perfil'
+    | '/produtor'
     | '/signup'
+    | '/checkout-produto/$id'
     | '/checkout/$id'
     | '/curso/$id'
+    | '/oferta/$slug'
     | '/admin/curso/$id'
     | '/curso/$id/'
     | '/curso/$id/modulo/$moduleId'
@@ -189,9 +225,12 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MeusCursosRoute: typeof MeusCursosRoute
   PerfilRoute: typeof PerfilRoute
+  ProdutorRoute: typeof ProdutorRoute
   SignupRoute: typeof SignupRoute
+  CheckoutProdutoIdRoute: typeof CheckoutProdutoIdRoute
   CheckoutIdRoute: typeof CheckoutIdRoute
   CursoIdRoute: typeof CursoIdRouteWithChildren
+  OfertaSlugRoute: typeof OfertaSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -201,6 +240,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/produtor': {
+      id: '/produtor'
+      path: '/produtor'
+      fullPath: '/produtor'
+      preLoaderRoute: typeof ProdutorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/perfil': {
@@ -252,6 +298,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/oferta/$slug': {
+      id: '/oferta/$slug'
+      path: '/oferta/$slug'
+      fullPath: '/oferta/$slug'
+      preLoaderRoute: typeof OfertaSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/curso/$id': {
       id: '/curso/$id'
       path: '/curso/$id'
@@ -264,6 +317,13 @@ declare module '@tanstack/react-router' {
       path: '/checkout/$id'
       fullPath: '/checkout/$id'
       preLoaderRoute: typeof CheckoutIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout-produto/$id': {
+      id: '/checkout-produto/$id'
+      path: '/checkout-produto/$id'
+      fullPath: '/checkout-produto/$id'
+      preLoaderRoute: typeof CheckoutProdutoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/curso/$id/': {
@@ -321,9 +381,12 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MeusCursosRoute: MeusCursosRoute,
   PerfilRoute: PerfilRoute,
+  ProdutorRoute: ProdutorRoute,
   SignupRoute: SignupRoute,
+  CheckoutProdutoIdRoute: CheckoutProdutoIdRoute,
   CheckoutIdRoute: CheckoutIdRoute,
   CursoIdRoute: CursoIdRouteWithChildren,
+  OfertaSlugRoute: OfertaSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

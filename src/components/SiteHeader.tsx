@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+﻿import { Link } from "@tanstack/react-router";
 import { Play, Shield, LogOut, User as UserIcon, CreditCard, ChevronDown, Menu, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,7 +52,10 @@ export function SiteHeader({ authed }: { authed?: boolean }) {
                 Meus Cursos
               </Link>
               <Link to="/afiliacao" className="px-4 py-2 text-sm font-semibold rounded-md hover:bg-surface transition-colors" activeProps={{ className: "text-primary" }}>
-                Afiliação
+                AfiliaÃ§Ã£o
+              </Link>
+              <Link to="/produtor" className="px-4 py-2 text-sm font-semibold rounded-md hover:bg-surface transition-colors" activeProps={{ className: "text-primary" }}>
+                Produtor
               </Link>
               {isAdmin && (
                 <Link to="/admin" className="px-3 py-2 text-sm font-semibold rounded-md hover:bg-surface transition-colors flex items-center gap-1" activeProps={{ className: "text-primary" }}>
@@ -78,7 +81,7 @@ export function SiteHeader({ authed }: { authed?: boolean }) {
                 {open && (
                   <div className="absolute right-0 mt-2 w-60 bg-surface border border-border rounded-xl shadow-card overflow-hidden">
                     <div className="px-4 py-3 border-b border-border">
-                      <div className="text-sm font-semibold truncate">{name || "Usuário"}</div>
+                      <div className="text-sm font-semibold truncate">{name || "UsuÃ¡rio"}</div>
                       <div className="text-xs text-muted-foreground truncate">{session?.user.email}</div>
                     </div>
                     <Link to="/perfil" onClick={() => setOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-surface-elevated transition-colors">
@@ -103,7 +106,7 @@ export function SiteHeader({ authed }: { authed?: boolean }) {
                 Entrar
               </Link>
               <Link to="/signup" className="bg-gradient-red text-primary-foreground px-5 py-2 text-sm font-bold rounded-md shadow-glow hover:scale-105 transition-transform">
-                Começar
+                ComeÃ§ar
               </Link>
             </>
           )}
@@ -130,12 +133,13 @@ export function SiteHeader({ authed }: { authed?: boolean }) {
                     {avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" /> : <UserIcon className="w-5 h-5 text-muted-foreground" />}
                   </div>
                   <div className="min-w-0">
-                    <div className="text-sm font-semibold truncate">{name || "Usuário"}</div>
+                    <div className="text-sm font-semibold truncate">{name || "UsuÃ¡rio"}</div>
                     <div className="text-xs text-muted-foreground truncate">{session?.user.email}</div>
                   </div>
                 </div>
                 <Link to="/meus-cursos" onClick={() => setMobileOpen(false)} className="px-4 py-3 text-sm font-semibold rounded-md hover:bg-surface transition-colors">Meus Cursos</Link>
-                <Link to="/afiliacao" onClick={() => setMobileOpen(false)} className="px-4 py-3 text-sm font-semibold rounded-md hover:bg-surface transition-colors">Afiliação</Link>
+                <Link to="/afiliacao" onClick={() => setMobileOpen(false)} className="px-4 py-3 text-sm font-semibold rounded-md hover:bg-surface transition-colors">AfiliaÃ§Ã£o</Link>
+                <Link to="/produtor" onClick={() => setMobileOpen(false)} className="px-4 py-3 text-sm font-semibold rounded-md hover:bg-surface transition-colors">Produtor</Link>
                 {isAdmin && (
                   <Link to="/admin" onClick={() => setMobileOpen(false)} className="px-4 py-3 text-sm font-semibold rounded-md hover:bg-surface transition-colors flex items-center gap-2">
                     <Shield className="w-4 h-4" /> Admin
@@ -160,7 +164,7 @@ export function SiteHeader({ authed }: { authed?: boolean }) {
                   Entrar
                 </Link>
                 <Link to="/signup" onClick={() => setMobileOpen(false)} className="bg-gradient-red text-primary-foreground px-5 py-3 text-sm font-bold rounded-md shadow-glow text-center">
-                  Começar
+                  ComeÃ§ar
                 </Link>
               </>
             )}
@@ -170,3 +174,4 @@ export function SiteHeader({ authed }: { authed?: boolean }) {
     </header>
   );
 }
+

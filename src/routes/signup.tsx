@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Play } from "lucide-react";
+import { Play, GraduationCap, Megaphone } from "lucide-react";
 
 export const Route = createFileRoute("/signup")({
   component: SignupPage,
@@ -13,6 +13,7 @@ function SignupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [accountType, setAccountType] = useState<"student" | "producer">("student");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -21,14 +22,14 @@ function SignupPage() {
     const { error } = await supabase.auth.signUp({
       email, password,
       options: {
-        emailRedirectTo: window.location.origin + "/meus-cursos",
-        data: { full_name: name },
+        emailRedirectTo: window.location.origin + (accountType === "producer" ? "/produtor" : "/meus-cursos"),
+        data: { full_name: name, account_type: accountType },
       },
     });
     setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Conta criada! Verifique seu email.");
-    navigate({ to: "/meus-cursos" });
+    navigate({ to: accountType === "producer" ? "/produtor" : "/meus-cursos" });
   };
 
   return (
@@ -44,6 +45,33 @@ function SignupPage() {
           <p className="text-sm text-muted-foreground mb-6">Comece sua jornada como criador</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="text-xs uppercase tracking-wider text-muted-foreground">Tipo de conta</label>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAccountType("student")}
+                  className={`rounded-xl border p-3 text-left transition-colors ${
+                    accountType === "student" ? "border-primary bg-primary/15" : "border-border bg-input hover:border-primary/60"
+                  }`}
+                >
+                  <GraduationCap className="w-5 h-5 text-primary" />
+                  <div className="mt-2 text-sm font-bold">Aluno</div>
+                  <div className="text-[11px] text-muted-foreground">Assistir cursos</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAccountType("producer")}
+                  className={`rounded-xl border p-3 text-left transition-colors ${
+                    accountType === "producer" ? "border-primary bg-primary/15" : "border-border bg-input hover:border-primary/60"
+                  }`}
+                >
+                  <Megaphone className="w-5 h-5 text-primary" />
+                  <div className="mt-2 text-sm font-bold">Produtor</div>
+                  <div className="text-[11px] text-muted-foreground">Criar checkout</div>
+                </button>
+              </div>
+            </div>
             <div>
               <label className="text-xs uppercase tracking-wider text-muted-foreground">Nome</label>
               <input
