@@ -109,6 +109,7 @@ export function VideoPlayer({ src, onProgress, poster, title }: Props) {
   const [playbackRate, setPlaybackRate] = useState(1);
   const [currentTime, setCurrentTime] = useState(0);
   const [videoDuration, setVideoDuration] = useState(0);
+  const [maxUnlockedTime, setMaxUnlockedTime] = useState(0);
   const { type, embedUrl, youtubeId } = parseEmbed(currentSrc);
   const progressKey = useMemo(
     () => `marcondesflix:video-progress:${currentSrc}`,
@@ -127,10 +128,12 @@ export function VideoPlayer({ src, onProgress, poster, title }: Props) {
       window.localStorage.removeItem(progressKey);
       setCurrentTime(duration);
       setVideoDuration(duration);
+      setMaxUnlockedTime(duration);
       onProgress?.(duration);
       return;
     }
     setCurrentTime(Math.max(0, seconds));
+    setMaxUnlockedTime((currentMax) => Math.max(currentMax, seconds));
     if (duration && Number.isFinite(duration)) setVideoDuration(duration);
     window.localStorage.setItem(progressKey, String(Math.floor(seconds)));
     onProgress?.(seconds);
@@ -143,6 +146,7 @@ export function VideoPlayer({ src, onProgress, poster, title }: Props) {
     setPlaybackRate(1);
     setCurrentTime(0);
     setVideoDuration(0);
+    setMaxUnlockedTime(0);
   }, [src]);
 
   useEffect(() => {
@@ -175,6 +179,7 @@ export function VideoPlayer({ src, onProgress, poster, title }: Props) {
             if (savedTime) {
               youtubePlayerRef.current?.seekTo(savedTime, true);
               setCurrentTime(savedTime);
+              setMaxUnlockedTime(savedTime);
             }
             const duration = youtubePlayerRef.current?.getDuration() || 0;
             setVideoDuration(duration);
@@ -233,7 +238,9 @@ export function VideoPlayer({ src, onProgress, poster, title }: Props) {
     const player = youtubePlayerRef.current;
     if (!player) return;
     const duration = player.getDuration() || 0;
-    const nextTime = Math.max(0, Math.min(duration || Infinity, player.getCurrentTime() + deltaSeconds));
+    const current = player.getCurrentTime();
+    const maxAllowed = Math.max(maxUnlockedTime, current);
+    const nextTime = Math.max(0, Math.min(duration || Infinity, maxAllowed, current + deltaSeconds));
     player.seekTo(nextTime, true);
     setCurrentTime(nextTime);
     setVideoDuration(duration);
@@ -244,7 +251,8 @@ export function VideoPlayer({ src, onProgress, poster, title }: Props) {
     const player = youtubePlayerRef.current;
     if (!player) return;
     const duration = player.getDuration() || videoDuration || 0;
-    const nextTime = Math.max(0, Math.min(duration || Infinity, seconds));
+    const maxAllowed = Math.max(maxUnlockedTime, player.getCurrentTime());
+    const nextTime = Math.max(0, Math.min(duration || Infinity, maxAllowed, seconds));
     player.seekTo(nextTime, true);
     setCurrentTime(nextTime);
     setVideoDuration(duration);
@@ -285,6 +293,7 @@ export function VideoPlayer({ src, onProgress, poster, title }: Props) {
 
   if (type === "youtube") {
     const progressPercent = videoDuration ? Math.min(100, Math.max(0, (currentTime / videoDuration) * 100)) : 0;
+    const unlockedPercent = videoDuration ? Math.min(100, Math.max(0, (maxUnlockedTime / videoDuration) * 100)) : 0;
 
     return (
       <div className="group relative w-full h-full overflow-hidden bg-black">
@@ -336,9 +345,9 @@ export function VideoPlayer({ src, onProgress, poster, title }: Props) {
               onChange={(event) => seekYouTubeTo(Number(event.currentTarget.value))}
               className="h-2 w-full cursor-pointer appearance-none rounded-full accent-red-600 outline-none"
               style={{
-                background: `linear-gradient(to right, #ef0025 ${progressPercent}%, rgba(255,255,255,0.22) ${progressPercent}%)`,
+                background: `linear-gradient(to right, #ef0025 ${progressPercent}%, rgba(255,255,255,0.42) ${progressPercent}%, rgba(255,255,255,0.42) ${unlockedPercent}%, rgba(255,255,255,0.16) ${unlockedPercent}%)`,
               }}
-              aria-label="Adiantar ou retroceder aula"
+              aria-label="Retroceder ou avancar apenas ate onde ja assistiu"
             />
           </div>
         )}
@@ -347,13 +356,14 @@ export function VideoPlayer({ src, onProgress, poster, title }: Props) {
             <button
               type="button"
               onClick={() => seekYouTubeBy(-10)}
-              className="rounded-full bg-white/10 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.14em] transition hover:bg-white/20"
+              className="rounded-full bg-white/10 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.14em] transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white/10"
             >
               -10s
             </button>
             <button
               type="button"
               onClick={() => seekYouTubeBy(10)}
+              disabled={currentTime >= maxUnlockedTime - 1}
               className="rounded-full bg-white/10 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.14em] transition hover:bg-white/20"
             >
               +10s
