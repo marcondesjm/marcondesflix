@@ -173,29 +173,32 @@ function Index() {
       <SiteHeader />
 
       {/* HERO */}
-      <section className="relative pt-32 pb-24 overflow-hidden">
+      <section className="relative pt-28 pb-20 overflow-hidden">
         <img src={heroBg} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" width={1920} height={1088} />
         <div className="absolute inset-0 bg-hero-glow" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/60 to-background" />
-        <div className="relative max-w-6xl mx-auto px-6 text-center">
-          <h1 className="font-display text-4xl sm:text-5xl md:text-7xl lg:text-8xl leading-[0.95] tracking-tight">
-            LANCE SEU INFOPRODUTO<br />
-            SEM SE PRENDER NA TECNOLOGIA<br />
-            <span className="text-primary text-glow">MESMO COMEÇANDO DO ZERO</span>
+        <div className="relative max-w-5xl mx-auto px-6 text-center">
+          <div className="mb-6 inline-flex rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.24em] text-primary">
+            Plataforma completa para infoprodutos
+          </div>
+          <h1 className="font-display mx-auto max-w-4xl text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[0.92] tracking-tight">
+            Lance seu infoproduto
+            <span className="block text-foreground/90">sem se prender na tecnologia</span>
+            <span className="mt-2 block text-primary text-glow">mesmo comecando do zero</span>
           </h1>
-          <p className="mt-8 text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-7 text-sm md:text-base text-muted-foreground max-w-xl mx-auto leading-relaxed">
             Tenha sua oferta pronta para vender com páginas, checkout, integrações, área de membros e suporte DWY.
             Economize em taxas e foque no que importa: seu conteúdo.
           </p>
-          <div className="mt-10 flex flex-wrap justify-center gap-4">
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
             <a
               href="#planos"
-              className="bg-gradient-red text-primary-foreground px-8 py-4 rounded-md font-bold tracking-wide shadow-glow hover:scale-105 transition-transform text-sm md:text-base"
+              className="bg-gradient-red text-primary-foreground px-7 py-3.5 rounded-md font-bold tracking-wide shadow-glow hover:scale-105 transition-transform text-xs md:text-sm"
             >
               QUERO MEU INFOPRODUTO SEM TRAVAS
             </a>
           </div>
-          <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
             {[
               { n: "200+", l: "Criadores ativos" },
               { n: "150K+", l: "Alunos nas plataformas" },
@@ -439,3 +442,4 @@ function Index() {
     </div>
   );
 }
+
