@@ -1,30 +1,38 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Save, Trash2, X } from "lucide-react";
 
 type Course = { id: string; title: string };
 type Module = { id: string; title: string; position: number; course_id: string };
+type AdminPickerProps = { initialCourseId?: string };
 
-export function ModulesAdmin() {
+export function ModulesAdmin({ initialCourseId }: AdminPickerProps) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [courseId, setCourseId] = useState<string>("");
   const [modules, setModules] = useState<Module[]>([]);
   const [title, setTitle] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
 
   useEffect(() => {
     (async () => {
       const { data } = await supabase.from("courses").select("id,title").order("title");
       setCourses(data || []);
-      if (data?.[0]) setCourseId(data[0].id);
+      if (initialCourseId && data?.some((course) => course.id === initialCourseId)) {
+        setCourseId(initialCourseId);
+      } else if (data?.[0]) {
+        setCourseId(data[0].id);
+      }
     })();
-  }, []);
+  }, [initialCourseId]);
 
   useEffect(() => {
     if (!courseId) return;
     (async () => {
       const { data } = await supabase.from("modules").select("*").eq("course_id", courseId).order("position");
       setModules(data || []);
+      setEditingId(null);
     })();
   }, [courseId]);
 
@@ -33,19 +41,33 @@ export function ModulesAdmin() {
     if (!courseId || !title.trim()) return;
     const { data, error } = await supabase
       .from("modules")
-      .insert({ course_id: courseId, title, position: modules.length })
+      .insert({ course_id: courseId, title: title.trim(), position: modules.length })
       .select().single();
     if (error) return toast.error(error.message);
     setModules((m) => [...m, data as Module]);
     setTitle("");
-    toast.success("Módulo criado!");
+    toast.success("Modulo criado!");
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Excluir módulo? Aulas vinculadas ficarão sem módulo.")) return;
+    if (!confirm("Excluir modulo? Aulas vinculadas ficarao sem modulo.")) return;
     const { error } = await supabase.from("modules").delete().eq("id", id);
     if (error) return toast.error(error.message);
     setModules((m) => m.filter((x) => x.id !== id));
+  };
+
+  const startEdit = (module: Module) => {
+    setEditingId(module.id);
+    setEditTitle(module.title);
+  };
+
+  const save = async (id: string) => {
+    if (!editTitle.trim()) return toast.error("Informe o nome do modulo.");
+    const { error } = await supabase.from("modules").update({ title: editTitle.trim() }).eq("id", id);
+    if (error) return toast.error(error.message);
+    setModules((mods) => mods.map((module) => (module.id === id ? { ...module, title: editTitle.trim() } : module)));
+    setEditingId(null);
+    toast.success("Modulo atualizado!");
   };
 
   return (
@@ -65,7 +87,7 @@ export function ModulesAdmin() {
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Nome do módulo"
+          placeholder="Nome do modulo"
           required
           className="flex-1 bg-input border border-border rounded-md px-3 py-2 text-sm focus:border-primary outline-none"
         />
@@ -78,39 +100,80 @@ export function ModulesAdmin() {
         {modules.map((m, i) => (
           <div key={m.id} className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4">
             <span className="text-muted-foreground text-xs font-mono w-6">{i + 1}.</span>
-            <div className="flex-1 font-semibold">{m.title}</div>
-            <button onClick={() => remove(m.id)} className="p-2 text-muted-foreground hover:text-primary">
-              <Trash2 className="w-4 h-4" />
-            </button>
+            {editingId === m.id ? (
+              <>
+                <input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="flex-1 bg-input border border-border rounded-md px-3 py-2 text-sm focus:border-primary outline-none"
+                />
+                <button onClick={() => save(m.id)} className="text-xs px-3 py-1.5 rounded bg-primary text-primary-foreground font-semibold inline-flex items-center gap-1">
+                  <Save className="w-3.5 h-3.5" /> Salvar
+                </button>
+                <button onClick={() => setEditingId(null)} className="p-2 text-muted-foreground hover:text-primary">
+                  <X className="w-4 h-4" />
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="flex-1 font-semibold">{m.title}</div>
+                <button onClick={() => startEdit(m)} className="p-2 text-muted-foreground hover:text-primary" title="Editar modulo">
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button onClick={() => remove(m.id)} className="p-2 text-muted-foreground hover:text-primary" title="Excluir modulo">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </>
+            )}
           </div>
         ))}
-        {!modules.length && <div className="text-muted-foreground text-sm py-8 text-center">Nenhum módulo neste curso.</div>}
+        {!modules.length && <div className="text-muted-foreground text-sm py-8 text-center">Nenhum modulo neste curso.</div>}
       </div>
     </div>
   );
 }
 
-type Lesson = { id: string; title: string; course_id: string; position: number; video_url: string | null };
+type Lesson = {
+  id: string;
+  title: string;
+  course_id: string;
+  module_id: string | null;
+  position: number;
+  video_url: string | null;
+  duration_seconds: number | null;
+};
 
-export function LessonsAdmin() {
+export function LessonsAdmin({ initialCourseId }: AdminPickerProps) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [courseId, setCourseId] = useState("");
+  const [modules, setModules] = useState<Module[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
-  const [form, setForm] = useState({ title: "", video_url: "" });
+  const [form, setForm] = useState({ title: "", video_url: "", duration_seconds: "", module_id: "" });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ title: "", video_url: "", duration_seconds: "", module_id: "" });
 
   useEffect(() => {
     (async () => {
       const { data } = await supabase.from("courses").select("id,title").order("title");
       setCourses(data || []);
-      if (data?.[0]) setCourseId(data[0].id);
+      if (initialCourseId && data?.some((course) => course.id === initialCourseId)) {
+        setCourseId(initialCourseId);
+      } else if (data?.[0]) {
+        setCourseId(data[0].id);
+      }
     })();
-  }, []);
+  }, [initialCourseId]);
 
   useEffect(() => {
     if (!courseId) return;
     (async () => {
-      const { data } = await supabase.from("lessons").select("*").eq("course_id", courseId).order("position");
-      setLessons(data || []);
+      const [{ data: ls }, { data: mods }] = await Promise.all([
+        supabase.from("lessons").select("*").eq("course_id", courseId).order("position"),
+        supabase.from("modules").select("*").eq("course_id", courseId).order("position"),
+      ]);
+      setLessons(ls || []);
+      setModules(mods || []);
+      setEditingId(null);
     })();
   }, [courseId]);
 
@@ -119,11 +182,18 @@ export function LessonsAdmin() {
     if (!courseId) return;
     const { data, error } = await supabase
       .from("lessons")
-      .insert({ course_id: courseId, title: form.title, video_url: form.video_url, position: lessons.length })
+      .insert({
+        course_id: courseId,
+        title: form.title,
+        video_url: form.video_url || null,
+        duration_seconds: parseInt(form.duration_seconds) || 0,
+        module_id: form.module_id || null,
+        position: lessons.length,
+      })
       .select().single();
     if (error) return toast.error(error.message);
     setLessons((l) => [...l, data as Lesson]);
-    setForm({ title: "", video_url: "" });
+    setForm({ title: "", video_url: "", duration_seconds: "", module_id: "" });
     toast.success("Aula criada!");
   };
 
@@ -132,6 +202,31 @@ export function LessonsAdmin() {
     const { error } = await supabase.from("lessons").delete().eq("id", id);
     if (error) return toast.error(error.message);
     setLessons((l) => l.filter((x) => x.id !== id));
+  };
+
+  const startEdit = (lesson: Lesson) => {
+    setEditingId(lesson.id);
+    setEditForm({
+      title: lesson.title,
+      video_url: lesson.video_url || "",
+      duration_seconds: lesson.duration_seconds ? String(lesson.duration_seconds) : "",
+      module_id: lesson.module_id || "",
+    });
+  };
+
+  const save = async (id: string) => {
+    if (!editForm.title.trim()) return toast.error("Informe o titulo da aula.");
+    const payload = {
+      title: editForm.title.trim(),
+      video_url: editForm.video_url || null,
+      duration_seconds: parseInt(editForm.duration_seconds) || 0,
+      module_id: editForm.module_id || null,
+    };
+    const { error } = await supabase.from("lessons").update(payload).eq("id", id);
+    if (error) return toast.error(error.message);
+    setLessons((items) => items.map((lesson) => (lesson.id === id ? { ...lesson, ...payload } : lesson)));
+    setEditingId(null);
+    toast.success("Aula atualizada!");
   };
 
   return (
@@ -147,35 +242,95 @@ export function LessonsAdmin() {
         </select>
       </div>
 
-      <form onSubmit={create} className="grid md:grid-cols-[1fr_1fr_auto] gap-2 max-w-3xl">
+      <form onSubmit={create} className="grid md:grid-cols-[1fr_1fr_130px_auto] gap-2 max-w-5xl">
         <input
           value={form.title}
           onChange={(e) => setForm({ ...form, title: e.target.value })}
-          placeholder="Título da aula" required
+          placeholder="Titulo da aula" required
           className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:border-primary outline-none"
         />
         <input
           value={form.video_url}
           onChange={(e) => setForm({ ...form, video_url: e.target.value })}
-          placeholder="URL do vídeo (YouTube, Vimeo, MP4)"
+          placeholder="URL do video (YouTube, Vimeo, MP4)"
+          className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:border-primary outline-none"
+        />
+        <input
+          value={form.duration_seconds}
+          onChange={(e) => setForm({ ...form, duration_seconds: e.target.value })}
+          placeholder="Segundos"
+          type="number"
           className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:border-primary outline-none"
         />
         <button className="bg-gradient-red px-4 py-2 rounded-md font-bold text-sm shadow-glow inline-flex items-center gap-2 justify-center">
           <Plus className="w-4 h-4" /> Adicionar
         </button>
+        <select
+          value={form.module_id}
+          onChange={(e) => setForm({ ...form, module_id: e.target.value })}
+          className="md:col-span-3 bg-input border border-border rounded-md px-3 py-2 text-sm focus:border-primary outline-none"
+        >
+          <option value="">Sem modulo</option>
+          {modules.map((module) => <option key={module.id} value={module.id}>{module.title}</option>)}
+        </select>
       </form>
 
       <div className="space-y-2">
         {lessons.map((l, i) => (
           <div key={l.id} className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4">
             <span className="text-muted-foreground text-xs font-mono w-6">{i + 1}.</span>
-            <div className="flex-1 min-w-0">
-              <div className="font-semibold truncate">{l.title}</div>
-              <div className="text-xs text-muted-foreground truncate">{l.video_url || "Sem vídeo"}</div>
-            </div>
-            <button onClick={() => remove(l.id)} className="p-2 text-muted-foreground hover:text-primary">
-              <Trash2 className="w-4 h-4" />
-            </button>
+            {editingId === l.id ? (
+              <div className="flex-1 grid md:grid-cols-[1fr_1fr_120px_auto_auto] gap-2">
+                <input
+                  value={editForm.title}
+                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:border-primary outline-none"
+                />
+                <input
+                  value={editForm.video_url}
+                  onChange={(e) => setEditForm({ ...editForm, video_url: e.target.value })}
+                  className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:border-primary outline-none"
+                  placeholder="URL do video"
+                />
+                <input
+                  value={editForm.duration_seconds}
+                  onChange={(e) => setEditForm({ ...editForm, duration_seconds: e.target.value })}
+                  type="number"
+                  className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:border-primary outline-none"
+                  placeholder="Segundos"
+                />
+                <select
+                  value={editForm.module_id}
+                  onChange={(e) => setEditForm({ ...editForm, module_id: e.target.value })}
+                  className="md:col-span-3 bg-input border border-border rounded-md px-3 py-2 text-sm focus:border-primary outline-none"
+                >
+                  <option value="">Sem modulo</option>
+                  {modules.map((module) => <option key={module.id} value={module.id}>{module.title}</option>)}
+                </select>
+                <button onClick={() => save(l.id)} className="text-xs px-3 py-1.5 rounded bg-primary text-primary-foreground font-semibold inline-flex items-center justify-center gap-1">
+                  <Save className="w-3.5 h-3.5" /> Salvar
+                </button>
+                <button onClick={() => setEditingId(null)} className="p-2 text-muted-foreground hover:text-primary">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold truncate">{l.title}</div>
+                  <div className="text-xs text-muted-foreground truncate">{l.video_url || "Sem video"}</div>
+                  <div className="text-[11px] text-muted-foreground mt-1">
+                    {modules.find((module) => module.id === l.module_id)?.title || "Sem modulo"} - {Math.round((l.duration_seconds || 0) / 60)} min
+                  </div>
+                </div>
+                <button onClick={() => startEdit(l)} className="p-2 text-muted-foreground hover:text-primary" title="Editar aula">
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button onClick={() => remove(l.id)} className="p-2 text-muted-foreground hover:text-primary" title="Excluir aula">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </>
+            )}
           </div>
         ))}
         {!lessons.length && <div className="text-muted-foreground text-sm py-8 text-center">Nenhuma aula neste curso.</div>}
@@ -183,7 +338,6 @@ export function LessonsAdmin() {
     </div>
   );
 }
-
 type UserRow = { id: string; full_name: string | null; created_at: string; isAdmin: boolean };
 
 export function UsersAdmin() {
@@ -238,7 +392,7 @@ export function UsersAdmin() {
           </button>
         </div>
       ))}
-      {!users.length && <div className="text-muted-foreground text-sm py-8 text-center">Nenhum usuário.</div>}
+      {!users.length && <div className="text-muted-foreground text-sm py-8 text-center">Nenhum usuÃ¡rio.</div>}
     </div>
   );
 }
@@ -264,14 +418,14 @@ export function CommentsAdmin() {
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Excluir comentário?")) return;
+    if (!confirm("Excluir comentÃ¡rio?")) return;
     const { error } = await supabase.from("comments").delete().eq("id", id);
     if (error) return toast.error(error.message);
     setComments((cs) => cs.filter((x) => x.id !== id));
   };
 
   if (loading) return <div className="text-muted-foreground text-sm">Carregando...</div>;
-  if (!comments.length) return <div className="text-muted-foreground text-sm py-8 text-center">Nenhum comentário ainda.</div>;
+  if (!comments.length) return <div className="text-muted-foreground text-sm py-8 text-center">Nenhum comentÃ¡rio ainda.</div>;
 
   return (
     <div className="space-y-2">
@@ -281,7 +435,7 @@ export function CommentsAdmin() {
             <div className="flex-1 min-w-0">
               <p className="text-sm">{c.content}</p>
               <div className="text-xs text-muted-foreground mt-2">
-                Aula: <code>{c.lesson_id.slice(0, 8)}</code> · {new Date(c.created_at).toLocaleString("pt-BR")}
+                Aula: <code>{c.lesson_id.slice(0, 8)}</code> Â· {new Date(c.created_at).toLocaleString("pt-BR")}
               </div>
             </div>
             <button
@@ -306,7 +460,7 @@ const SETTINGS_KEYS: { key: string; label: string; placeholder: string }[] = [
   { key: "site_name", label: "Nome do site", placeholder: "MarcondesFlix" },
   { key: "site_tagline", label: "Slogan", placeholder: "Cursos sob demanda" },
   { key: "support_email", label: "Email de suporte", placeholder: "suporte@exemplo.com" },
-  { key: "primary_color", label: "Cor primária (hex)", placeholder: "#E50914" },
+  { key: "primary_color", label: "Cor primÃ¡ria (hex)", placeholder: "#E50914" },
 ];
 
 export function SettingsAdmin() {
@@ -379,7 +533,7 @@ export function SalesAdmin() {
         <div className="font-display text-4xl text-primary text-glow mt-1">
           R$ {total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
         </div>
-        <div className="text-xs text-muted-foreground mt-1">{sales.length} transações</div>
+        <div className="text-xs text-muted-foreground mt-1">{sales.length} transaÃ§Ãµes</div>
       </div>
 
       {!sales.length ? (
@@ -419,3 +573,4 @@ export function SalesAdmin() {
     </div>
   );
 }
+

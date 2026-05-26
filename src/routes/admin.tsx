@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Plus, Trash2, BookOpen, Users, Shield, Upload, Menu } from "lucide-react";
+import { Plus, Trash2, BookOpen, Users, Shield, Upload, Menu, Pencil, Save, X, Layers } from "lucide-react";
 import { AdminSidebar, type AdminSection } from "@/components/AdminSidebar";
 import { SimpleCrud } from "@/components/admin/SimpleCrud";
 import { ModulesAdmin, LessonsAdmin, UsersAdmin, CommentsAdmin, SettingsAdmin, SalesAdmin } from "@/components/admin/sections";
@@ -15,9 +15,12 @@ const VALID_SECTIONS: AdminSection[] = [
 ];
 
 export const Route = createFileRoute("/admin")({
-  validateSearch: (search: Record<string, unknown>): { s: AdminSection } => {
+  validateSearch: (search: Record<string, unknown>): { s: AdminSection; course?: string } => {
     const s = search.s as AdminSection;
-    return { s: VALID_SECTIONS.includes(s) ? s : "dashboard" };
+    return {
+      s: VALID_SECTIONS.includes(s) ? s : "dashboard",
+      course: typeof search.course === "string" ? search.course : undefined,
+    };
   },
   component: AdminPage,
 });
@@ -37,9 +40,12 @@ function AdminPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [stats, setStats] = useState({ users: 0, enrollments: 0 });
   const [form, setForm] = useState({ title: "", description: "", category: "", cover_url: "" });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ title: "", description: "", category: "", cover_url: "" });
   const [uploading, setUploading] = useState(false);
   const search = Route.useSearch();
   const section = search.s as AdminSection;
+  const selectedCourseId = search.course;
   
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -98,6 +104,31 @@ function AdminPage() {
     const { error } = await supabase.from("courses").update({ is_published: !c.is_published }).eq("id", c.id);
     if (error) return toast.error(error.message);
     setCourses((cs) => cs.map((x) => (x.id === c.id ? { ...x, is_published: !c.is_published } : x)));
+  };
+
+  const startEdit = (course: Course) => {
+    setEditingId(course.id);
+    setEditForm({
+      title: course.title,
+      description: course.description || "",
+      category: course.category || "",
+      cover_url: course.cover_url || "",
+    });
+  };
+
+  const saveCourse = async (id: string) => {
+    if (!editForm.title.trim()) return toast.error("Informe o titulo do curso.");
+    const payload = {
+      title: editForm.title.trim(),
+      description: editForm.description || null,
+      category: editForm.category || null,
+      cover_url: editForm.cover_url || null,
+    };
+    const { error } = await supabase.from("courses").update(payload).eq("id", id);
+    if (error) return toast.error(error.message);
+    setCourses((cs) => cs.map((course) => (course.id === id ? { ...course, ...payload } : course)));
+    setEditingId(null);
+    toast.success("Curso atualizado!");
   };
 
   const uploadCover = async (file: File) => {
@@ -218,26 +249,86 @@ function AdminPage() {
                 {courses.map((c) => (
                   <div key={c.id} className="bg-surface border border-border rounded-xl p-4 flex items-center gap-4 flex-wrap">
                     <div className="w-24 h-14 rounded overflow-hidden bg-surface-elevated flex-shrink-0">
-                      {c.cover_url && <img src={c.cover_url} alt={c.title} className="w-full h-full object-cover" />}
+                      {c.cover_url && (
+                        <img
+                          src={c.cover_url}
+                          alt={c.title}
+                          className="w-full h-full object-cover"
+                          onError={(event) => { event.currentTarget.style.display = "none"; }}
+                        />
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold truncate">{c.title}</div>
-                      <div className="text-xs text-muted-foreground">{c.category || "Sem categoria"}</div>
+                    {editingId === c.id ? (
+                      <div className="flex-1 min-w-[260px] grid gap-2">
+                        <input
+                          value={editForm.title}
+                          onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                          className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:border-primary outline-none"
+                          placeholder="Titulo do curso"
+                        />
+                        <div className="grid md:grid-cols-2 gap-2">
+                          <input
+                            value={editForm.category}
+                            onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                            className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:border-primary outline-none"
+                            placeholder="Categoria"
+                          />
+                          <input
+                            value={editForm.cover_url}
+                            onChange={(e) => setEditForm({ ...editForm, cover_url: e.target.value })}
+                            className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:border-primary outline-none"
+                            placeholder="URL da capa"
+                          />
+                        </div>
+                        <textarea
+                          value={editForm.description}
+                          onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                          rows={2}
+                          className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:border-primary outline-none"
+                          placeholder="Descricao"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold truncate">{c.title}</div>
+                        <div className="text-xs text-muted-foreground">{c.category || "Sem categoria"}</div>
+                      </div>
+                    )}
+                    <div className="ml-auto flex items-center gap-2 flex-wrap justify-end">
+                      {editingId === c.id ? (
+                        <>
+                          <button onClick={() => saveCourse(c.id)} className="text-xs px-3 py-1.5 rounded bg-primary text-primary-foreground font-semibold inline-flex items-center gap-1">
+                            <Save className="w-3.5 h-3.5" /> Salvar
+                          </button>
+                          <button onClick={() => setEditingId(null)} className="text-xs px-3 py-1.5 rounded bg-surface-elevated border border-border hover:border-primary font-semibold inline-flex items-center gap-1">
+                            <X className="w-3.5 h-3.5" /> Cancelar
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => togglePublish(c)}
+                            className={`text-xs px-2 py-1 rounded font-bold uppercase tracking-wider ${
+                              c.is_published ? "bg-primary/20 text-primary" : "bg-surface-elevated text-muted-foreground"
+                            }`}
+                          >
+                            {c.is_published ? "Publicado" : "Rascunho"}
+                          </button>
+                          <button onClick={() => startEdit(c)} className="text-xs px-3 py-1.5 rounded bg-surface-elevated border border-border hover:border-primary font-semibold inline-flex items-center gap-1">
+                            <Pencil className="w-3.5 h-3.5" /> Editar
+                          </button>
+                          <Link to="/admin" search={{ s: "modulos", course: c.id }} className="text-xs px-3 py-1.5 rounded bg-surface-elevated border border-border hover:border-primary font-semibold inline-flex items-center gap-1">
+                            <Layers className="w-3.5 h-3.5" /> Modulos
+                          </Link>
+                          <Link to="/admin" search={{ s: "aulas", course: c.id }} className="text-xs px-3 py-1.5 rounded bg-surface-elevated border border-border hover:border-primary font-semibold">
+                            Aulas
+                          </Link>
+                          <button onClick={() => deleteCourse(c.id)} className="p-2 text-muted-foreground hover:text-primary">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
                     </div>
-                    <button
-                      onClick={() => togglePublish(c)}
-                      className={`text-xs px-2 py-1 rounded font-bold uppercase tracking-wider ${
-                        c.is_published ? "bg-primary/20 text-primary" : "bg-surface-elevated text-muted-foreground"
-                      }`}
-                    >
-                      {c.is_published ? "Publicado" : "Rascunho"}
-                    </button>
-                    <Link to="/admin/curso/$id" params={{ id: c.id }} className="text-xs px-3 py-1.5 rounded bg-surface-elevated border border-border hover:border-primary font-semibold">
-                      Aulas
-                    </Link>
-                    <button onClick={() => deleteCourse(c.id)} className="p-2 text-muted-foreground hover:text-primary">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
                   </div>
                 ))}
                 {!courses.length && <div className="text-sm text-muted-foreground py-8 text-center">Nenhum curso ainda. Crie o primeiro ao lado.</div>}
@@ -286,8 +377,8 @@ function AdminPage() {
             />
           )}
 
-          {section === "modulos" && <ModulesAdmin />}
-          {section === "aulas" && <LessonsAdmin />}
+          {section === "modulos" && <ModulesAdmin initialCourseId={selectedCourseId} />}
+          {section === "aulas" && <LessonsAdmin initialCourseId={selectedCourseId} />}
           {section === "usuarios" && <UsersAdmin />}
           {section === "comentarios" && <CommentsAdmin />}
           {section === "config" && <SettingsAdmin />}
